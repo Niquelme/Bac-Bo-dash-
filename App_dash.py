@@ -11,17 +11,15 @@ server = app.server
 
 # Arquivo de histórico
 HIST_FILE = "historico_bacbo.json"
-# Carregar histórico do arquivo
 if os.path.exists(HIST_FILE):
     with open(HIST_FILE, 'r') as f:
         historico = json.load(f)
 else:
     historico = []
 
-# Emojis para as cores
 cores = {'vermelho': '🔴', 'azul': '🔵', 'amarelo': '🟡'}
 
-# Detectores de Padrões
+# Detectores de padrões
 def detectar_empate_vizinho(seq):
     if len(seq) < 3:
         return False
@@ -119,23 +117,23 @@ app.layout = html.Div([
 ], style={'maxWidth':'500px','margin':'auto','textAlign':'center'})
 
 @app.callback(
-    Output('div-historico','children'),
-    Output('graph-freq','figure'),
-    Output('div-previsao','children'),
-    Input('btn-add','n_clicks'),
-    State('dropdown-cor','value')
+    Output('div-historico', 'children'),
+    Output('graph-freq', 'figure'),
+    Output('div-previsao', 'children'),
+    Input('btn-add', 'n_clicks'),
+    State('dropdown-cor', 'value'),
+    prevent_initial_call=True
 )
-def atualizar(n_clicks, nova_cor):
-    if nova_cor:
-        historico.append(nova_cor)
-        with open(HIST_FILE, 'w') as f:
-            json.dump(historico, f)
-
-    texto_hist = " ".join([cores[c] for c in historico]) if historico else "Nenhum resultado ainda"
-    fig = gerar_grafico(historico) if historico else go.Figure()
-    previsao = prever_cor(historico) if len(historico) >= 3 else "Aguardando mais dados..."
-    texto_prev = cores.get(previsao, previsao)
-    return texto_hist, fig, texto_prev
+def atualizar(n, cor):
+    if cor not in cores:
+        return dash.no_update, dash.no_update, "Selecione uma cor válida."
+    historico.append(cor)
+    with open(HIST_FILE, 'w') as f:
+        json.dump(historico, f)
+    previsao = prever_cor(historico)
+    fig = gerar_grafico(historico)
+    hist_texto = " ➤ ".join([cores.get(c, c) for c in historico])
+    return hist_texto, fig, f"Provável próxima: {cores.get(previsao, previsao)}"
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host='0.0.0.0', port=8050)
+    app.run(debug=True, host='0.0.0.0', port=8050)
